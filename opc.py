@@ -108,4 +108,5 @@ if __name__ == '__main__':
             print(f'Now State : {OPC_State}')
     finally:
         server.stop()
-        print('END')
+        t = time.strftime("%H-%M-%S",time.gmtime())
+        print(f'{t}-END')
