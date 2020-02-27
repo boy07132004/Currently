@@ -81,25 +81,7 @@ def Monitor():
             if len(ans)>1:
                 Data_List.set_value(ans)
             p.join()
-    """
-    while State.get_value()>0:
-        values = curr.read()
-        time.sleep(0.1)
-        print(f'Curr now : {values}')
-        if values>=Curr_threshold:
-            List_Per_Act = []
-            time_last = 0.0
-            while (values>=Curr_threshold):
-                ac_x = ac_y = ac_z = 9999
-                time_now = time.perf_counter()
-                if (time_now-time_last)>0.001:
-                    ac_x,ac_y,ac_z = vib.read()
-                    List_Per_Act.append([(time_now-time_last),ac_x,ac_y,ac_z,values])
-                    time_last = time_now
-                values = curr.read()
-            Data_List.set_value(List_Per_Act)
-            del List_Per_Act
-    """
+
 if __name__ == '__main__':
     server = Server()
     server.set_endpoint("opc.tcp://192.168.0.101:4840/")
