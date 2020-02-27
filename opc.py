@@ -20,22 +20,24 @@ class Vib():
         self.ac_z = self.read_word_2c(0x3f) / 16384.0
 
         return self.ac_x,self.ac_y,self.ac_z
+
+
+def Start_Vib(curr,q):
+    vib = Vib()
+    time_last = 0.0
+    ans = []
+    while curr.value>3000:
+        time_now  = time.perf_counter()
+        ac_x = ac_y = ac_z = 0.1
+        if ( time_now - time_last ) > 0.001:
+            ac_x, ac_y, ac_z = vib.read()
+            ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
+            time_last = time_now
+    q.put(ans)
 #===============================================================#
 #                        MPU END
 #===============================================================#
-"""
-import Adafruit_ADS1x15
-class Curr():
-    def __init__(self,pin):
-        self.adc = Adafruit_ADS1x15.ADS1115()
-        self.adc._data_rate_config(860)
-        self.GAIN = 1
-        #read_values from A(pin)
-        self.ana_input = pin
-    def read(self):
-        #return values+1
-        return self.adc.read_adc(self.ana_input, gain=self.GAIN)
-"""
+
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import busio
@@ -56,13 +58,30 @@ class Curr():
 # Main loop
 import time
 from opcua import ua, Server
+from multiprocessing import Process, Value, Queue
 def Monitor():
     vib = Vib()
-    #read_values from A()
+    #read_analog_values from A()
     curr = Curr(3)
     #---Variables---#
     Curr_threshold = 3000
     #---Variables---#
+    while State.get_value()>0:
+        values = curr.read()
+        time.sleep(0.1)
+        print(f'Curr now : {values}')
+        if values>=Curr_threshold:
+            var = Value('f',values)
+            q = Queue()
+            p = Process( target=Start_Vib , args=(var,q))
+            p.start()
+            while var.value>=Curr_threshold:
+                var.value = curr.read()
+            ans = q.get()
+            if len(ans)>1:
+                Data_List.set_value(ans)
+            p.join()
+    """
     while State.get_value()>0:
         values = curr.read()
         time.sleep(0.1)
@@ -80,7 +99,7 @@ def Monitor():
                 values = curr.read()
             Data_List.set_value(List_Per_Act)
             del List_Per_Act
-
+    """
 if __name__ == '__main__':
     server = Server()
     server.set_endpoint("opc.tcp://192.168.0.101:4840/")
@@ -100,12 +119,12 @@ if __name__ == '__main__':
     #Loop start
         while 1:
             OPC_State = State.get_value()
+            print(f'Now State : {OPC_State}')
             if OPC_State>0:
                 Monitor()
                 print('End------------------*')
             else:
                 time.sleep(0.5)
-            print(f'Now State : {OPC_State}')
     finally:
         server.stop()
         t = time.strftime("%H-%M-%S",time.gmtime())
