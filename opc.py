@@ -26,20 +26,16 @@ class Vib():
 
 
 def Start_Vib(curr,q):
-    try:
-        vib = Vib()
-        time_last = 0.0
-        ans = []
-        while curr.value>3000:
-            time_now  = time.perf_counter()
-            ac_x = ac_y = ac_z = 0.1
-            if ( time_now - time_last ) > 0.001:
-                ac_x, ac_y, ac_z = vib.read()
-                ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
-                time_last = time_now
-        code.put(1)
-    except:
-        code.put(0)
+    vib = Vib()
+    time_last = 0.0
+    ans = []
+    while curr.value>3000:
+        time_now  = time.perf_counter()
+        ac_x = ac_y = ac_z = 0.1
+        if ( time_now - time_last ) > 0.001:
+            ac_x, ac_y, ac_z = vib.read()
+            ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
+            time_last = time_now
     q.put(ans)
 #===============================================================#
 #                        MPU END
@@ -67,36 +63,32 @@ class Curr():
 from opcua import ua, Server
 from multiprocessing import Process, Value, Queue
 def Monitor():
-    try:
-        vib = Vib()
-    #read_analog_values from A()
-        curr = Curr(3)
-    #---Variables---#
-        Curr_threshold = 3000
-        count = 0
-    #---Variables---#
-        while State.get_value()*Ope_Code>0:
-            values = curr.read()
-            time.sleep(0.1)
-            if count>100:
-                print(f'Curr now : {values}')
-                count = 0
-            if values>=Curr_threshold:
-                var = Value('f',values)
-                code = Queue()
-                q = Queue()
-                p = Process( target=Start_Vib , args=(var,q,code))
-                p.start()
-                while var.value>=Curr_threshold:
-                    var.value = curr.read()
-                ans = q.get()
-                Ope_Code = code.get()
-                if len(ans)>1:
-                    Data_List.set_value(ans)
-                p.join()
-            count+=1
-    except:
-        Ope_Code = 0
+    vib = Vib()
+#read_analog_values from A()
+    curr = Curr(3)
+#---Variables---#
+    Curr_threshold = 3000
+    count = 0
+#---Variables---#
+    while OPC_State>0:
+        values = curr.read()
+        time.sleep(0.1)
+        if count>100:
+            print(f'Curr now : {values}')
+            count = 0
+        if values>=Curr_threshold:
+            var = Value('f',values)
+            q = Queue()
+            p = Process( target=Start_Vib , args=(var,q))
+            p.start()
+            while var.value>=Curr_threshold:
+                var.value = curr.read()
+            ans = q.get()
+            if len(ans)>1:
+                Data_List.set_value(ans)
+            p.join()
+        count+=1
+
 def reboot():
     import os
     time.sleep(10)
@@ -119,12 +111,10 @@ if __name__ == '__main__':
     State.set_writable()
     Data_List = myacc.add_variable(idx, "Data_List", [''])
     global OPC_State
-    global Ope_Code
-    Ope_Code = 1
     server.start()
     try:
     #Loop start
-        while Ope_Code:
+        while True:
             OPC_State = State.get_value()
             if count > 10:
                 print(f'Now State : {OPC_State}')
@@ -145,4 +135,3 @@ if __name__ == '__main__':
         print('='*20)
     
     reboot()
-
