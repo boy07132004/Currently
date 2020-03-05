@@ -1,4 +1,5 @@
 import time
+print('Start in 5s...')
 time.sleep(5)
 import smbus
 global count
@@ -26,16 +27,19 @@ class Vib():
 
 
 def Start_Vib(curr,q):
-    vib = Vib()
-    time_last = 0.0
-    ans = []
-    while curr.value>3000:
-        time_now  = time.perf_counter()
-        ac_x = ac_y = ac_z = 0.1
-        if ( time_now - time_last ) > 0.001:
-            ac_x, ac_y, ac_z = vib.read()
-            ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
-            time_last = time_now
+    try:
+        vib = Vib()
+        time_last = 0.0
+        ans = []
+        while curr.value>3000:
+            time_now  = time.perf_counter()
+            ac_x = ac_y = ac_z = 0.1
+            if ( time_now - time_last ) > 0.001:
+                ac_x, ac_y, ac_z = vib.read()
+                ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
+                time_last = time_now
+    except:
+        ans = 'ERROR'
     q.put(ans)
 #===============================================================#
 #                        MPU END
@@ -63,36 +67,49 @@ class Curr():
 from opcua import ua, Server
 from multiprocessing import Process, Value, Queue
 def Monitor():
-    vib = Vib()
 #read_analog_values from A()
     curr = Curr(3)
 #---Variables---#
     Curr_threshold = 3000
     count = 0
 #---Variables---#
-    while OPC_State>0:
-        values = curr.read()
-        time.sleep(0.1)
-        if count>100:
-            print(f'Curr now : {values}')
-            count = 0
-        if values>=Curr_threshold:
-            var = Value('f',values)
-            q = Queue()
-            p = Process( target=Start_Vib , args=(var,q))
-            p.start()
-            while var.value>=Curr_threshold:
-                var.value = curr.read()
-            ans = q.get()
-            if len(ans)>1:
-                Data_List.set_value(ans)
-            p.join()
-        count+=1
+    global State
+    while State.get_value()>0:
+        try:
+            values = curr.read()
+            time.sleep(0.1)
+            if count>100:
+                print(f'Curr now : {values}')
+                count = 0
+                State.set_value(State.get_value()-1)
+            if values>=Curr_threshold:
+                var = Value('f',values)
+                q = Queue()
+                p = Process( target=Start_Vib , args=(var,q))
+                p.start()
+                while var.value>=Curr_threshold:
+                    var.value = curr.read()
+                ans = q.get()
+                p.join()
+                if ans=='ERROR':
+                    reboot()
+                elif len(ans)>1:
+                    Data_List.set_value(ans)
+            count+=1
+        except KeyboardInterrupt:
+            global server
+            server.stop()
+            global running
+            running = False
+            print('='*20)
+            print(f'{time.ctime()}-END')
+            print('='*20)
+            break
 
 def reboot():
     import os
-    time.sleep(10)
     print('Reboot in 10s...')
+    time.sleep(10)
     os.system('sudo reboot')
 
 
@@ -102,7 +119,7 @@ if __name__ == '__main__':
     server.set_endpoint("opc.tcp://192.168.0.101:4840/")
     uri = "ML6A01"
     idx = server.register_namespace(uri)
-
+    
     # get Objects node, this is where we should put our nodes
     objects = server.get_objects_node()
     # populating our address space
@@ -110,11 +127,12 @@ if __name__ == '__main__':
     State = myacc.add_variable(idx, "State", 0)
     State.set_writable()
     Data_List = myacc.add_variable(idx, "Data_List", [''])
-    global OPC_State
+    
     server.start()
-    try:
+    running = True
     #Loop start
-        while True:
+    while running:
+        try:
             OPC_State = State.get_value()
             if count > 10:
                 print(f'Now State : {OPC_State}')
@@ -128,10 +146,6 @@ if __name__ == '__main__':
             else:
                 time.sleep(1)
             count+=1
-    except KeyboardInterrupt:
-        server.stop()
-        print('='*20)
-        print(f'{time.ctime()}-END')
-        print('='*20)
-    
-    reboot()
+            
+        except KeyboardInterrupt:
+            break
