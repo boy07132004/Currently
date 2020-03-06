@@ -3,6 +3,7 @@ print('Start in 5s...')
 time.sleep(5)
 from smbus2 import SMBus
 global count
+
 class Vib():
     def __init__(self):
         self.power_mgmt_1 = 0x6b
@@ -63,7 +64,26 @@ class Curr():
 #===============================================================#
 
 # Main loop
+def reboot():
+    import os
+    print('Reboot in 10s...')
+    global server
+    server.stop()
+    time.sleep(10)
+    os.system('sudo reboot')
 
+import signal
+import sys
+def signal_handler(sig,frame):
+    global running
+    running = False
+    print('='*20)
+    print(f'{time.ctime()}-SIG_END')
+    print('='*20)
+    global server
+    server.stop()
+    sys.exit(0)
+    
 from opcua import ua, Server
 from multiprocessing import Process, Value, Queue
 def Monitor():
@@ -96,27 +116,15 @@ def Monitor():
                 elif len(ans)>1:
                     Data_List.set_value(ans)
             count+=1
-        except KeyboardInterrupt:
-            global server
-            server.stop()
-            global running
-            running = False
-            print('='*20)
-            print(f'{time.ctime()}-END')
-            print('='*20)
-            break
         except:
             print('Error - Monitir()')
-            break
+            reboot()
 
-def reboot():
-    import os
-    print('Reboot in 10s...')
-    time.sleep(10)
-    os.system('sudo reboot')
+
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT,signal_handler)
     count = 0
     server = Server()
     server.set_endpoint("opc.tcp://192.168.0.101:4840/")
@@ -150,8 +158,5 @@ if __name__ == '__main__':
                 time.sleep(1)
             count+=1
             
-        except KeyboardInterrupt:
-            print('='*20)
-            print(f'{time.ctime()}-END')
-            print('='*20)
-            break
+        except:
+            pass
