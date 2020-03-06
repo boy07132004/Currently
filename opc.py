@@ -1,13 +1,13 @@
 import time
 print('Start in 5s...')
 time.sleep(5)
-import smbus
+from smbus2 import SMBus
 global count
 class Vib():
     def __init__(self):
         self.power_mgmt_1 = 0x6b
-        self.power_mgmt_2 = 0x6c
-        self.bus = smbus.SMBus(1) # or bus = smbus.SMBus(1) for Revision 2 boards
+        #self.power_mgmt_2 = 0x6c
+        self.bus = SMBus(1)       # or bus = SMBus(1) for Revision 2 boards
         self.address = 0x68       # This is the address value read via the i2cdetect command
         self.bus.write_byte_data(self.address, self.power_mgmt_1, 0)
     def read_word_2c(self,adr):
@@ -67,9 +67,9 @@ class Curr():
 from opcua import ua, Server
 from multiprocessing import Process, Value, Queue
 def Monitor():
-#read_analog_values from A()
+    #read_analog_values from A()
     curr = Curr(3)
-#---Variables---#
+    #---Variables---#
     Curr_threshold = 3000
     count = 0
 #---Variables---#
@@ -151,4 +151,7 @@ if __name__ == '__main__':
             count+=1
             
         except KeyboardInterrupt:
+            print('='*20)
+            print(f'{time.ctime()}-END')
+            print('='*20)
             break
