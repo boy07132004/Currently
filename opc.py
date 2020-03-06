@@ -105,6 +105,9 @@ def Monitor():
             print(f'{time.ctime()}-END')
             print('='*20)
             break
+        except:
+            print('Error - Monitir()')
+            break
 
 def reboot():
     import os
