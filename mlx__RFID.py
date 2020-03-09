@@ -74,10 +74,9 @@ def signal_handler(sig,frame):
     sys.exit(0)
 if __name__ == '__main__':
     running = True
-    rfid = open('/dev/hidraw0','rb')
     while running:
         print('a')
-        e_id = rfid.readline()
+        e_id = input()
         print('b')
         try:
             print('c')
