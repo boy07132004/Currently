@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Just a little python script."""
 
 __author__ = 'Scott Johnston'
 __version__ = '0.0.1'
-
+__edit__ = 'Zheming'
 import smbus2
 import crcmod
 import time
 
-# TODO: Fix register writing, because PEC code isn't being created by smbus2.
-
 
 class MLX90615:
-    """Melexis MLX90615 IR temperature sensor API."""
 
     # Register addresses (0x1x = EEPROM, 0x2x = RAM)
     MLX90615_CONFIG = 0x12
@@ -75,19 +71,16 @@ def signal_handler(sig,frame):
 if __name__ == '__main__':
     running = True
     while running:
-        print('a')
-        e_id = input()
-        print('b')
+        e_id = input('Scan your ID :')
         try:
-            print('c')
             with MLX90615() as mlx90615:
                 """
                 print("Object temperature (deg C) : {}".format(
                     mlx90615.get_object_temperature()))"""
                 temp = mlx90615.get_object_temperature()
+                print(f'ID : {e_id}\nTemp : {temp}')
                 """
                 print("Ambient temperature (deg C): {}".format(
                     mlx90615.get_ambient_temperature()))"""
         except IOError:
             print("Error creating connection to i2c.")
-        print(f'ID : {e_id}\nTemp : {temp}')
