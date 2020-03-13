@@ -1,6 +1,4 @@
 import time
-print('Start in 5s...')
-time.sleep(5)
 from smbus2 import SMBus
 global count
 
@@ -124,6 +122,8 @@ def Monitor():
 
 
 if __name__ == '__main__':
+    print('Start in 5s...')
+    time.sleep(5)
     signal.signal(signal.SIGINT,signal_handler)
     count = 0
     server = Server()
