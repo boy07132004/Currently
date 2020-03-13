@@ -127,7 +127,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT,signal_handler)
     count = 0
     server = Server()
-    server.set_endpoint("opc.tcp://192.168.0.101:4840/")
+    server.set_endpoint("opc.tcp://192.168.0.111:4840/")
     uri = "ML6A01"
     idx = server.register_namespace(uri)
     
