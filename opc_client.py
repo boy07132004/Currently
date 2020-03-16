@@ -4,11 +4,19 @@ import time
 from opcua import Client
 from opcua import ua
 import csv
+import signal
+def signal_handler(sig,frame):
+    global running
+    running = False
+    announcement('SIG_INT')
+
 def announcement(word):
     print('='*10,time.ctime(),'='*10)
-    print('='*10,word,'='*10)
+    print(word)
+    print('-'*10)
 class SubHandler(object):
     def datachange_notification(self, node, val, data):
+        # Record condition
         if len(val) > 3000:
             announcement("New data change")
             time_ctime = time.ctime().split()
@@ -21,7 +29,7 @@ class SubHandler(object):
 
 def main():
     client = Client("opc.tcp://192.168.0.111:4840/")
-    running = True
+    global running
     try:
         client.connect()
         announcement('Connected')
@@ -50,7 +58,14 @@ def main():
         announcement('End')
 
 if __name__ == "__main__":
-    main()
-    print('Hi')
+    running = True
+    while running:
+        try:
+            main()
+        except:
+            pass
+        announcement('Reconnect in 30s')
+        time.sleep(30)
+    
     
             
