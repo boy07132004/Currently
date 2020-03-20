@@ -32,8 +32,8 @@ def Start_Vib(curr,q):
         ans = []
         while curr.value>3000:
             time_now  = time.perf_counter()
-            ac_x = ac_y = ac_z = 0.1
-            if ( time_now - time_last ) > 0.001:
+            ac_x = ac_y = ac_z = -999
+            if ( time_now - time_last ) > 0.00099:
                 ac_x, ac_y, ac_z = vib.read()
                 ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
                 time_last = time_now
@@ -101,6 +101,7 @@ def Monitor():
                 count = 0
                 State.set_value(State.get_value()-1)
             if values>=Curr_threshold:
+                print('Machine On')
                 var = Value('f',values)
                 q = Queue()
                 p = Process( target=Start_Vib , args=(var,q))
@@ -113,17 +114,19 @@ def Monitor():
                     reboot()
                 elif len(ans)>1:
                     Data_List.set_value(ans)
+                print(f'Data collected... Len:{len(ans)}')
+                del ans
             count+=1
         except:
-            print('Error - Monitir()')
+            print('Error - Monitor()')
             reboot()
 
 
 
 
 if __name__ == '__main__':
-    print('Start in 5s...')
-    time.sleep(5)
+    print('Start in 3s...')
+    time.sleep(3)
     signal.signal(signal.SIGINT,signal_handler)
     count = 0
     server = Server()
@@ -155,7 +158,7 @@ if __name__ == '__main__':
                 Monitor()
                 print('-'*10,'End Monitor','-'*10)
             else:
-                time.sleep(1)
+                time.sleep(1.5)
             count+=1
             
         except:
