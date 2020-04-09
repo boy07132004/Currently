@@ -65,7 +65,7 @@ if __name__ == "__main__":
         except:
             pass
         announcement('Reconnect in 30s')
-        time.sleep(30)
+        time.sleep(29)
     
     
             
