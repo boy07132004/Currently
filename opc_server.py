@@ -1,5 +1,5 @@
-from Vib import MPU9250
-from CT import ADS1115
+from sensor.Vib import MPU9250
+from sensor.CT import ADS1115
 
 def Start_Vib(curr,q):
     try:
