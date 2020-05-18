@@ -11,7 +11,7 @@ def Start_Vib(curr,q):
             ac_x = ac_y = ac_z = -999
             if ( time_now - time_last ) > 0.00099:
                 ac_x, ac_y, ac_z = vib.read()
-                ans.append([(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
+                ans.append([1/(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
                 time_last = time_now
     except:
         ans = 'ERROR'
