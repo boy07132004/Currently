@@ -1,9 +1,9 @@
 from smbus2 import SMBus
 class MPU9250():
-    def __init__(self):
+    def __init__(self,bus=1):
         self.power_mgmt_1 = 0x6b
         #self.power_mgmt_2 = 0x6c
-        self.bus = SMBus(1)       # or bus = SMBus(1) for Revision 2 boards
+        self.bus = SMBus(bus)      # or bus = SMBus(1) for Revision 2 boards
         self.address = 0x68       # This is the address value read via the i2cdetect command
         self.bus.write_byte_data(self.address, self.power_mgmt_1, 0)
     def read_word_2c(self,adr):
@@ -20,3 +20,10 @@ class MPU9250():
         self.ac_z = self.read_word_2c(0x3f) / 16384.0
 
         return self.ac_x,self.ac_y,self.ac_z
+
+if __name__ == '__main__':
+    mpu = MPU9250()
+    import time
+    while 1:
+        print(mpu.read())
+        time.sleep(0.2)

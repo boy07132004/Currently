@@ -13,8 +13,9 @@ def Start_Vib(curr,q):
                 ac_x, ac_y, ac_z = vib.read()
                 ans.append([1/(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
                 time_last = time_now
-    except:
+    except Exception as e:
         ans = 'ERROR'
+        print(e)
     q.put(ans)
 
 
@@ -103,5 +104,5 @@ if __name__ == '__main__':
             count+=1
         except KeyboardInterrupt:
             break
-        except:
-            pass
+        except Exception as e:
+            print(e)
