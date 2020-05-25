@@ -34,7 +34,7 @@ def Monitor():
     #read_analog_values from A()
     curr = ADS1115()
     #---Variables---#
-    Curr_threshold = 3000
+    Curr_threshold = Threshold.get_value()
     count = 0
 #---Variables---#
     global State
@@ -71,23 +71,22 @@ def Monitor():
 
 if __name__ == '__main__':
     import time
-    print('Start in 2s...')
-    time.sleep(2)
-    count = 0
+    print('Running.....')
     server = Server()
-    server.set_endpoint("opc.tcp://192.168.0.111:4840/")
+    server.set_endpoint("opc.tcp://172.20.10.10:4840/")
     idx = server.register_namespace("ML6A01")
     objects = server.get_objects_node()
-    
     myacc = objects.add_object(idx, "MyACC")
     State = myacc.add_variable(idx, "State", 0)
     State.set_writable()
     Data_List = myacc.add_variable(idx, "Data_List", [''])
+    Threshold = myacc.add_variable(idx, "CT threshold",3000)
+    Threshold.set_writable()
     
     server.start()
-    running = True
+    count = 0
     #Loop start
-    while running:
+    while True:
         try:
             OPC_State = State.get_value()
             if count > 10:
