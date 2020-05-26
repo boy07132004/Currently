@@ -73,7 +73,7 @@ if __name__ == '__main__':
     import time
     print('Running.....')
     server = Server()
-    server.set_endpoint("opc.tcp://172.20.10.10:4840/")
+    server.set_endpoint("opc.tcp://0.0.0.0:4840/")
     idx = server.register_namespace("ML6A01")
     objects = server.get_objects_node()
     myacc = objects.add_object(idx, "MyACC")
