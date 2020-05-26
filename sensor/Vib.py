@@ -20,7 +20,7 @@ class MPU9250():
         for i in range(3):
             self.val =  (self.val_list[i*2] << 8) + self.val_list[i*2+1]
             self.val =  self.val if self.val<0x8000 else -((65535 - self.val) + 1)
-            self.ret.append(round((self.val/16384.0),3))
+            self.ret.append(round((self.val/16384.0),5))
         return self.ret
     
     def read(self):
@@ -30,15 +30,13 @@ class MPU9250():
 if __name__ == '__main__':
     mpu = MPU9250()
     import time,csv
-    last = 0
-    while True:        
-        if 1:
-            [x,y,z] = mpu.read() 
-            dur = time.perf_counter()-last
-            last = time.perf_counter()
-            print(x,y,z,1/dur)
-            """
-            with open("out.csv","a") as file:
-                csv.writer(file).writerow([x,y,z]+[1/(time.perf_counter()-last)])
-            last = time.perf_counter()
-            """
+    time_last = 0
+    while True:
+        ans = []
+        time_now  = time.perf_counter()
+        ac_x = ac_y = ac_z = -999
+        if ( time_now - time_last ) > 0.00099:
+            ac_x, ac_y, ac_z = mpu.read()
+            ans.append([1/(time_now-time_last),ac_x,ac_y,ac_z])
+            time_last = time_now
+            print(ans)
