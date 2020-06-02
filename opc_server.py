@@ -3,10 +3,11 @@ from sensor.CT import ADS1115
 
 def Start_Vib(curr,q):
     try:
+        global Curr_threshold
         vib = MPU9250()
         time_last = 0.0
         ans = []
-        while curr.value>3000:
+        while curr.value>Curr_threshold:
             time_now  = time.perf_counter()
             ac_x = ac_y = ac_z = -999
             if ( time_now - time_last ) > 0.00099:
@@ -16,7 +17,8 @@ def Start_Vib(curr,q):
     except Exception as e:
         ans = 'ERROR'
         print(e)
-    q.put(ans)
+    finally:
+        q.put(ans)
 
 
 def reboot():
@@ -28,16 +30,16 @@ def reboot():
     os.system('sudo reboot')
 
 
-from opcua import ua, Server
-from multiprocessing import Process, Value, Queue
+
 def Monitor():
-    #read_analog_values from A()
+#read_analog_values from A()
     curr = ADS1115()
-    #---Variables---#
+#---Variables---#
+    global State
+    global Curr_threshold
     Curr_threshold = Threshold.get_value()
     count = 0
 #---Variables---#
-    global State
     while State.get_value()>0:
         try:
             values = curr.read()
@@ -53,8 +55,11 @@ def Monitor():
                 p = Process( target=Start_Vib , args=(var,q))
                 p.start()
                 print(var.value)
+                # Stop when CT value is lower than threshold we set or record time is more than 2 minutes
+                s = time.time()
                 while var.value>=Curr_threshold:
                     var.value = curr.read()
+                    if time.time()-s>120:var.value=0
                 ans = q.get()
                 p.join()
                 if ans=='ERROR':
@@ -64,13 +69,16 @@ def Monitor():
                 print(f'Data collected... Len:{len(ans)}')
                 del ans
             count+=1
-        except:
+        except Exception as e:
             print('Error - Monitor()')
+            print(e)
             reboot()
 
 
 if __name__ == '__main__':
     import time
+    from opcua import ua, Server
+    from multiprocessing import Process, Value, Queue
     print('Running.....')
     server = Server()
     server.set_endpoint("opc.tcp://0.0.0.0:4840/")
