@@ -55,18 +55,17 @@ def Monitor():
                 p = Process( target=Start_Vib , args=(var,q))
                 p.start()
                 print(var.value)
-                # Stop when CT value is lower than threshold we set or record time is more than 2 minutes
                 s = time.time()
                 while var.value>=Curr_threshold:
                     var.value = curr.read()
-                    if time.time()-s>120:var.value=0
+                    if time.time()-s>900:var.value=0 # Stop when CT value is lower than threshold we set or record time is more than 15 minutes
                 ans = q.get()
                 p.join()
                 if ans=='ERROR':
                     reboot()
                 elif len(ans)>1:
                     Data_List.set_value(ans)
-                print(f'Data collected... Len:{len(ans)}')
+                    print(f'Data collected... Len:{len(ans)}')
                 del ans
             count+=1
         except Exception as e:
