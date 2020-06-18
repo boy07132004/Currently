@@ -9,11 +9,6 @@ def announcement(word):
     print(word)
     print('-'*10)
 
-def record(val):
-    time_ctime = time.ctime().split()
-    time_now = time_ctime[1] + '_' + time_ctime[2] + '_' + time_ctime[3].replace(':','-')
-    DataFrame(val).to_csv(f"C:\\csv_log2\\{time_now}.csv",index=False,header=False)
-
 class SubHandler(object):
     def datachange_notification(self, node, val, data):
         if (len(val) > 3000):
