@@ -1,71 +1,59 @@
 import sys
 import time
-
-from opcua import Client
-from opcua import ua
-import csv
-import signal
-def signal_handler(sig,frame):
-    global running
-    running = False
-    announcement('SIG_INT')
+import asyncio
+from asyncua import Client
+from pandas import DataFrame
 
 def announcement(word):
     print('='*10,time.ctime(),'='*10)
     print(word)
     print('-'*10)
+
+def record(val):
+    time_ctime = time.ctime().split()
+    time_now = time_ctime[1] + '_' + time_ctime[2] + '_' + time_ctime[3].replace(':','-')
+    DataFrame(val).to_csv(f"C:\\csv_log2\\{time_now}.csv",index=False,header=False)
+
 class SubHandler(object):
     def datachange_notification(self, node, val, data):
-        # Record condition
-        if len(val) > 3000:
+        if (len(val) > 3000):
             announcement("New data change")
             time_ctime = time.ctime().split()
             time_now = time_ctime[1] + '_' + time_ctime[2] + '_' + time_ctime[3].replace(':','-')
-            with open(f"C:\\csv_log2\\{time_now}.csv",'w',newline="") as csvfile:
-                field_name = ['freq','X','Y','Z','Curr']
-                writer = csv.writer(csvfile)
-                writer.writerow(field_name)
-                writer.writerows(val[1:])
+            DataFrame(val[1:]).to_csv(f"C:\\csv_log2\\{time_now}.csv",index=False,header=False)
 
-def main():
-    client = Client("opc.tcp://192.168.0.111:4840/")
+async def main():
     global running
     try:
-        client.connect()
-        announcement('Connected')
-        state = client.get_node("ns=2;i=2")
-        data_list = client.get_node("ns=2;i=3")
-        state.set_value(1)
-
-    # Check data change
-        handler = SubHandler()
-        sub = client.create_subscription(500, handler)
-        handle = sub.subscribe_data_change(data_list)
-        while running:
-            if client.uaclient._uasocket._thread.isAlive():
-                state.set_value(3)
-                time.sleep(10)
-            else:
-                break
-
-
+        async with Client(url="opc.tcp://192.168.0.104:4840/") as client:
+            announcement('Connected')
+            state = client.get_node("ns=2;i=2")
+            data_list = client.get_node("ns=2;i=3")
+            await client.get_node("ns=2;i=4").set_value(300) # Threshold
+        # Check data change
+            handler = SubHandler()
+            sub = await client.create_subscription(500, handler)
+            handle = await sub.subscribe_data_change(data_list)
+            while True:
+                try:
+                    await state.write_value(3)
+                    await asyncio.sleep(10)
+                except Exception as e:
+                    print(e)
+                    break
     finally:
         if running:
             announcement('Disconnected')
         else:
-            state.set_value(0)
-        client.disconnect()
+            await state.set_value(0)
         announcement('End')
 
 if __name__ == "__main__":
     running = True
     while running:
         try:
-            main()
-        except:
-            pass
+            asyncio.run(main())
+        except Exception as e:
+            print(e)
         announcement('Reconnect in 30s')
         time.sleep(29)
-    
-    
-            
