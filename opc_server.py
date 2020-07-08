@@ -67,12 +67,13 @@ def Monitor():
                         buf.append(var.value)
                     else:
                         var.value=-1000 # Stop when CT value less than threshold > 0.1 sec
+                        print(buf)
                         break
                 ans = q.get()
                 p.join()
                 if ans=='ERROR':
                     reboot()
-                elif len(ans)>1:
+                elif len(ans)>200: # Set value
                     Data_List.set_value(ans)
                     print(f'Data collected... Len:{len(ans)}')
                 del ans
