@@ -60,7 +60,7 @@ def Monitor():
                     var.value = curr.read()
                     if var.value>=Curr_threshold:
                         buf = []
-                        if time.time()-s>20:
+                        if time.time()-s>300:
                             var.value=-1000 # Stop when record time is more than 5 minutes
                             break
                     elif len(buf)<60:
