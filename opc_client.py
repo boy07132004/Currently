@@ -20,7 +20,7 @@ class SubHandler(object):
 async def main():
     global running
     try:
-        async with Client(url="opc.tcp://192.168.0.104:4840/") as client:
+        async with Client(url="opc.tcp://192.168.0.100:4840/") as client:
             announcement('Connected')
             state = client.get_node("ns=2;i=2")
             data_list = client.get_node("ns=2;i=3")

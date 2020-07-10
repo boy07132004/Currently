@@ -3,11 +3,10 @@ from sensor.CT import ADS1115
 
 def Start_Vib(curr,q):
     try:
-        global Curr_threshold
         vib = MPU9250()
         time_last = 0.0
         ans = []
-        while curr.value>Curr_threshold:
+        while curr.value>-999:
             time_now  = time.perf_counter()
             ac_x = ac_y = ac_z = -999
             if ( time_now - time_last ) > 0.00099:
@@ -56,14 +55,25 @@ def Monitor():
                 p.start()
                 print(var.value)
                 s = time.time()
-                while var.value>=Curr_threshold:
+                buf = []
+                while True:
                     var.value = curr.read()
-                    if time.time()-s>900:var.value=0 # Stop when CT value is lower than threshold we set or record time is more than 15 minutes
+                    if var.value>=Curr_threshold:
+                        buf = []
+                        if time.time()-s>20:
+                            var.value=-1000 # Stop when record time is more than 5 minutes
+                            break
+                    elif len(buf)<60:
+                        buf.append(var.value)
+                    else:
+                        var.value=-1000 # Stop when CT value less than threshold > 0.1 sec
+                        print(buf)
+                        break
                 ans = q.get()
                 p.join()
                 if ans=='ERROR':
                     reboot()
-                elif len(ans)>1:
+                elif len(ans)>200: # Set value
                     Data_List.set_value(ans)
                     print(f'Data collected... Len:{len(ans)}')
                 del ans
