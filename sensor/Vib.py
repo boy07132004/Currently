@@ -37,6 +37,6 @@ if __name__ == '__main__':
         ac_x = ac_y = ac_z = -999
         if ( time_now - time_last ) > 0.00099:
             ac_x, ac_y, ac_z = mpu.read()
-            ans.append([1/(time_now-time_last),ac_x,ac_y,ac_z])
+            ans = [1/(time_now-time_last),ac_x,ac_y,ac_z]
             time_last = time_now
             print(ans)
