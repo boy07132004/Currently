@@ -6,7 +6,7 @@
 """
 import spidev
 import time
-class MPU9250_spi():
+class MPU9250():
     def __init__(self,scale=2):
         self.MAX_READING=65536
         self.data_output_dir = None
@@ -75,13 +75,14 @@ class MPU9250_spi():
         self.zAccel = (self.Lz[1]<<8)+self.Lz[2]
     
     def read_Init(self):
-        self.start = time.perf_counter()
+        start = time.perf_counter()
         print("Read init...")
-        while (time.perf_counter()-self.start)<5:
+        while (time.perf_counter()-start)<5:
             self.read_()
             time.sleep(0.001)
     
     def read(self):
+        self.xAccel = self.yAccel = self.yAccel = -999
         self.read_()
         if ( self.xAccel > (self.MAX_READING /2) ) :
             self.xAccel = (self.xAccel - self.MAX_READING) / self.scaleG
@@ -97,17 +98,17 @@ class MPU9250_spi():
             self.zAccel = (self.zAccel - self.MAX_READING) / self.scaleG
         else :
             self.zAccel = self.zAccel / self.scaleG
-        return self.xAccel,self.yAccel,self.zAccel
+        return [self.xAccel,self.yAccel,self.zAccel]
         
 if __name__ == '__main__':
-    mpu = MPU9250_spi()
+    mpu = MPU9250()
     import pandas as pd
     start = time.perf_counter()
     ret = []
     last = start
-    freq = 1000
+    freq = 500
     while time.perf_counter()-start<5:
         if time.perf_counter()-last>(1/freq)-0.00002:
+            ret.append([1/(time.perf_counter()-last)]+mpu.read())
             last = time.perf_counter()
-            ret.append(mpu.read())
     pd.DataFrame(ret).to_csv("spi_test.csv",index=False)
