@@ -1,26 +1,24 @@
-from sensor.Vib import MPU9250
-from sensor.CT import ADS1115
+from sensor.Vib_SPI import MPU9250
+from sensor.CT import ADS1015
 
-def Start_Vib(curr,q):
+def StartVib(sensor_1,sensor_2,q):
     try:
-        vib = MPU9250()
-        time_last = 0.0
-        ans = []
-        while curr.value>-999:
+        time_last = time.perf_counter()
+        ans = ""
+        while sensor_1.value>-999:
             time_now  = time.perf_counter()
-            ac_x = ac_y = ac_z = -999
             if ( time_now - time_last ) > 0.00099:
-                ac_x, ac_y, ac_z = vib.read()
-                ans.append([1/(time_now-time_last),ac_x,ac_y,ac_z,curr.value])
+                ans+=(str(round(1/(time_now-time_last),0))+','+str(sensor_2.read())[1:-1].replace(" ","")+','+str(sensor_1.value)+'\n')
+                #ans.append([time_now]+list(sensor_2.read())+[sensor_1.value])
                 time_last = time_now
     except Exception as e:
         ans = 'ERROR'
         print(e)
     finally:
-        q.put(ans)
+        q.put(ans[:-1])
 
 
-def reboot():
+def Reboot():
     import os
     print('Reboot in 10s...')
     global server
@@ -31,57 +29,51 @@ def reboot():
 
 
 def Monitor():
-#read_analog_values from A()
-    curr = ADS1115()
-#---Variables---#
-    global State
-    global Curr_threshold
-    Curr_threshold = Threshold.get_value()
+    sensor_1 = ADS1015()
+    sensor_2 = MPU9250()
+    threshold_1 = threshold.get_value()
     count = 0
-#---Variables---#
     while State.get_value()>0:
         try:
-            values = curr.read()
+            values = sensor_1.read()
             time.sleep(0.1)
             if count>100:
                 print(f'Curr now : {values}')
                 count = 0
                 State.set_value(State.get_value()-1)
-            if values>=Curr_threshold:
+            if values>=threshold_1:
                 print('Machine On')
-                var = Value('f',values)
+                ct_Value = Value('f',values)
                 q = Queue()
-                p = Process( target=Start_Vib , args=(var,q))
+                p = Process( target=StartVib , args=(ct_Value,sensor_2,q))
                 p.start()
-                print(var.value)
+                print(ct_Value.value)
                 s = time.time()
-                buf = []
+                buf = 0
                 while True:
-                    var.value = curr.read()
-                    if var.value>=Curr_threshold:
-                        buf = []
+                    ct_Value.value = sensor_1.read()
+                    if ct_Value.value>=threshold_1:
+                        buf = 0
                         if time.time()-s>300:
-                            var.value=-1000 # Stop when record time is more than 5 minutes
+                            ct_Value.value=-1000
                             break
-                    elif len(buf)<60:
-                        buf.append(var.value)
+                    elif buf<60:
+                        buf+=1
                     else:
-                        var.value=-1000 # Stop when CT value less than threshold > 0.1 sec
-                        print(buf)
+                        ct_Value.value=-1000
                         break
                 ans = q.get()
                 p.join()
                 if ans=='ERROR':
-                    reboot()
-                elif len(ans)>200: # Set value
+                    Reboot()
+                elif len(ans)>3000*20: # Set value
                     Data_List.set_value(ans)
-                    print(f'Data collected... Len:{len(ans)}')
-                del ans
+                    print(f'Data collected...')
             count+=1
         except Exception as e:
             print('Error - Monitor()')
             print(e)
-            reboot()
+            Reboot()
 
 
 if __name__ == '__main__':
@@ -97,8 +89,8 @@ if __name__ == '__main__':
     State = myacc.add_variable(idx, "State", 0)
     State.set_writable()
     Data_List = myacc.add_variable(idx, "Data_List", [''])
-    Threshold = myacc.add_variable(idx, "CT threshold",3000)
-    Threshold.set_writable()
+    threshold = myacc.add_variable(idx, "CT_Threshold",3000)
+    threshold.set_writable()
     
     server.start()
     count = 0
