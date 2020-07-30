@@ -98,17 +98,20 @@ class MPU9250():
             self.zAccel = (self.zAccel - self.MAX_READING) / self.scaleG
         else :
             self.zAccel = self.zAccel / self.scaleG
-        return [self.xAccel,self.yAccel,self.zAccel]
+        return round(self.xAccel,4),round(self.yAccel,4),round(self.zAccel,4)
         
 if __name__ == '__main__':
     mpu = MPU9250()
     import pandas as pd
-    start = time.perf_counter()
-    ret = []
-    last = start
-    freq = 500
-    while time.perf_counter()-start<5:
-        if time.perf_counter()-last>(1/freq)-0.00002:
-            ret.append([1/(time.perf_counter()-last)]+mpu.read())
-            last = time.perf_counter()
-    pd.DataFrame(ret).to_csv("spi_test.csv",index=False)
+    while 1:
+        start = time.perf_counter()
+        ret = []
+        last = start
+        freq = 1000
+        while time.perf_counter()-start<10:
+            if time.perf_counter()-last>(1/freq)-0.00002:
+                ret.append([1/(time.perf_counter()-last)]+[mpu.read()])
+                last = time.perf_counter()
+        import matplotlib.pyplot as plt
+        plt.plot(pd.DataFrame(ret)[0])
+        plt.show()
