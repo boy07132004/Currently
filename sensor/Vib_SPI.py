@@ -109,7 +109,7 @@ if __name__ == '__main__':
         last = start
         freq = 1000
         while time.perf_counter()-start<10:
-            if time.perf_counter()-last>(1/freq)-0.00002:
+            if time.perf_counter()-last>(1/freq):
                 ret.append([1/(time.perf_counter()-last)]+[mpu.read()])
                 last = time.perf_counter()
         import matplotlib.pyplot as plt

@@ -24,11 +24,11 @@ class ADS1015():
     
 if __name__ == '__main__':
     import time
-    ads = ADS1015()
+    ads = ADS1015(rate=2400)
     #"""
     now = time.perf_counter()
     while 1:
-        print(ads.read(),time.perf_counter()-now)
+        print(ads.read(),1/(time.perf_counter()-now))
         now = time.perf_counter()
     """
     import csv
